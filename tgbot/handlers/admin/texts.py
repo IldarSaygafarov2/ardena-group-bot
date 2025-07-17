@@ -1,18 +1,17 @@
 import os
-import uuid
 
 from aiogram import Router, types, F
 
 from database.repo.requests import RequestsRepo
-from tgbot.utils.excel import get_excel_data
-from tgbot.utils.converters import convert_nan_to_none, convert_str_to_date
 from schemas.cargo_tracking import CargoTrackingCreateSchema, CargoTrackingSchema
-
+from tgbot.utils.converters import convert_nan_to_none, convert_str_to_date
+from tgbot.utils.excel import get_excel_data
+from config.contants import CARGO_TRACKING_FIELDS
 
 admin_text_router = Router()
 
 
-@admin_text_router.message(F.document)
+@admin_text_router.message(F.document & F.chat.type.in_({"private"}))
 async def get_document(message: types.Message, repo: RequestsRepo):
     document = message.document
 
@@ -35,14 +34,6 @@ async def get_document(message: types.Message, repo: RequestsRepo):
         destination=destination
     )
 
-    excel_data = get_excel_data(destination)
-    for item in excel_data:
-        _item = convert_nan_to_none(item)
-        _item = convert_str_to_date(_item)
-        _item = CargoTrackingCreateSchema.model_validate(_item)
-        from_db = await repo.cargo_tracking.get_cargo_tracking_by_uni_in_shipment(_item.uni_in_shipment)
-        from_db = [CargoTrackingSchema.model_validate(i, from_attributes=True) for i in from_db]
-
-        # await repo.cargo_tracking.add_cargo_tracking(_item)
+    excel_data = get_excel_data(destination, CARGO_TRACKING_FIELDS)
 
     await message.answer('Данные были обновлены, либо добавлены в базу!')
