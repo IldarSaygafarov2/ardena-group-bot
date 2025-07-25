@@ -70,5 +70,5 @@ token.json
 *.sqlite3
 *.csv
 .DS_Store
-documents/pdf_images
+documents/
 

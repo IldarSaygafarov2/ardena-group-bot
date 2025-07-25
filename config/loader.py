@@ -5,14 +5,14 @@ import environs
 
 from config.bot_config import BotConfig
 from config.db_config import DbConfig
-
-
+from config.gpt_config import GptConfig
 
 
 @dataclass
 class Config:
     bot: BotConfig
     db: DbConfig
+    gpt: GptConfig
 
 
 def load_config(env_path: Optional[str] = None) -> Config:
@@ -22,6 +22,7 @@ def load_config(env_path: Optional[str] = None) -> Config:
     return Config(
         bot=BotConfig.load_from_env(env),
         db=DbConfig.load_from_env(env),
+        gpt=GptConfig.from_env(env),
     )
 
 
