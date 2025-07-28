@@ -1,10 +1,13 @@
+import json
 import os
-from pprint import pprint
+
 
 from aiogram import Router, F, types
 
 from utils.chat_gpt import get_response
 from utils.pdf_to_image import pdf_to_image
+from utils.helpers import write_to_json, read_json
+
 
 group_document_router = Router()
 
@@ -28,8 +31,12 @@ async def get_message_from_group(message: types.Message):
 
         output_file = document_name.split('.')[0]
         image = pdf_to_image(destination, path, output_file)
+        image_name = image.split('/')[-1]
 
         response = get_response(image_path=image)
-        pprint(response.output_text)
+        response_json = json.loads(response.output_text)
+        write_to_json(response_json, f'documents/{date}/{image_name}.json')
+
+
 
 
