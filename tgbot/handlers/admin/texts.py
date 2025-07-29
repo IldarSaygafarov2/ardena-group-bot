@@ -3,9 +3,11 @@ import os
 from aiogram import Router, types, F
 
 from database.repo.requests import RequestsRepo
-from tgbot.utils.converters import convert_nan_to_none, convert_str_to_date
-from tgbot.utils.excel import get_excel_data
-from config.contants import CARGO_TRACKING_FIELDS
+from aiogram.fsm.context import FSMContext
+from tgbot.misc.states import FileStates
+# from tgbot.utils.converters import convert_nan_to_none, convert_str_to_date
+# from tgbot.utils.excel import get_excel_data
+# from config.contants import CARGO_TRACKING_FIELDS
 
 admin_text_router = Router()
 
@@ -13,6 +15,7 @@ admin_text_router = Router()
 @admin_text_router.message(F.document & F.chat.type.in_({"private"}))
 async def get_document(message: types.Message, repo: RequestsRepo):
     document = message.document
+    date = message.date.date().strftime("%d.%m.%Y")
 
     # Example of file type validation
     allowed_types = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
@@ -25,14 +28,19 @@ async def get_document(message: types.Message, repo: RequestsRepo):
         await message.answer("File is too large!")
         return
 
-    os.makedirs('documents', exist_ok=True)
-    destination = os.path.join('documents', document.file_name)
+    os.makedirs(f'documents/{date}', exist_ok=True)
+    destination = os.path.join(f'documents/{date}', document.file_name)
+
+    to_db = await repo.chemistry_file.add_or_ignore_file(
+        name=document.file_name,
+        file_path=destination,
+        _date=date
+    )
+    print(to_db)
 
     await message.bot.download(
         document.file_id,
         destination=destination
     )
 
-    excel_data = get_excel_data(destination, CARGO_TRACKING_FIELDS)
-
-    await message.answer('Данные были обновлены, либо добавлены в базу!')
+    await message.answer('Файл получен!')
