@@ -151,7 +151,7 @@ def update_filtered_data_advanced(
 # updated_df, stats = update_filtered_data_advanced(
 #     file_path=TEST_PATH,
 #     filters=[
-#         ('UNI', 'contains', '80W648WA')
+#         ('UNI', 'contains', '50N782UA')
 #     ],
 #     updates={
 #         'ГТД ИМ73': '27014 / 25.07.2025 / 0009559',

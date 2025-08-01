@@ -11,45 +11,75 @@ def read_json(file_path):
         return json.load(file)
 
 
-# Версия с дополнительными проверками
-def format_complex_string_safe(input_string: str) -> str:
+def format_complex_string_safe(input_string: str) -> tuple[str, bool]:
+    """
+    Форматирует строку в стандартный вид и проверяет начинается ли она с числового значения.
+    Если формат не поддерживается, возвращает исходную строку.
+
+    Args:
+        input_string: Строка для форматирования
+
+    Returns:
+        tuple[str, bool]: (отформатированная строка, признак начала с числового значения)
+    """
     try:
+        if input_string is None:
+            return "", False
+
+        # Очищаем строку от лишних пробелов
         clean_string = ' '.join(input_string.split())
 
+        # Проверяем, начинается ли строка с числового значения
+        first_part = clean_string.split('/')[0].strip() if clean_string else ""
+        starts_with_number = first_part.isdigit()
+
+        # Разбиваем строку по слешам и очищаем от пробелов
         parts = [part.strip() for part in clean_string.split('/')]
 
-        if len(parts) != 5:
-            raise ValueError("Строка должна содержать 5 частей, разделенных '/'")
+        # Если 4 части (например: "27014 / 25 / 0705 / 0006929")
+        if len(parts) == 4:
+            try:
+                number = parts[0]
+                day = str(int(parts[1])).zfill(2)
 
-        if not parts[0].isdigit():
-            raise ValueError("Первая часть должна быть числом")
-        number = parts[0]
+                # Обработка месяца и года из одной части
+                date_part = parts[2]
+                if len(date_part) >= 4:
+                    month = str(int(date_part[:2])).zfill(2)
+                    year = f"20{date_part[2:]}" if len(date_part[2:]) == 2 else date_part[2:]
+                else:
+                    month = str(int(date_part)).zfill(2)
+                    year = "2025"  # дефолтный год
 
-        day = int(parts[1])
-        if not (1 <= day <= 31):
-            raise ValueError("День должен быть от 1 до 31")
-        day = str(day).zfill(2)
+                code = parts[3].zfill(6)
+                return f"{number} / {day}.{month}.{year} / {code}", starts_with_number
+            except (ValueError, IndexError):
+                pass
 
-        month = int(parts[2])
-        if not (1 <= month <= 12):
-            raise ValueError("Месяц должен быть от 1 до 12")
-        month = str(month).zfill(2)
+        # Если строка уже в формате "число / дд.мм.гггг / код"
+        if len(parts) == 3:
+            try:
+                number, date, code = parts
+                if '.' in date:
+                    # Строка уже в нужном формате
+                    return f"{number} / {date} / {code.zfill(6)}", starts_with_number
+            except (ValueError, IndexError):
+                pass
 
-        year = parts[3]
-        if not (len(year) == 4 and year.isdigit()):
-            raise ValueError("Год должен быть 4-значным числом")
+        # Если 5 частей (формат: число/день/месяц/год/код)
+        if len(parts) == 5:
+            try:
+                number = parts[0]
+                day = str(int(parts[1])).zfill(2)
+                month = str(int(parts[2])).zfill(2)
+                year = parts[3]
+                code = parts[4].zfill(6)
+                return f"{number} / {day}.{month}.{year} / {code}", starts_with_number
+            except (ValueError, IndexError):
+                pass
 
-        if not parts[4].isdigit():
-            raise ValueError("Код должен содержать только цифры")
-        code = parts[4].zfill(6)
+        # Если формат не поддерживается, возвращаем исходную строку
+        return clean_string, starts_with_number
 
-        result = f"{number} / {day}.{month}.{year} / {code}"
-
-        return result
-
-    except ValueError as ve:
-        raise ve
-    except Exception as e:
-        raise ValueError(f"Непредвиденная ошибка при форматировании: {str(e)}")
-
-
+    except Exception:
+        return input_string, starts_with_number
