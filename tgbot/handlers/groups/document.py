@@ -11,6 +11,7 @@ from utils.helpers import (
     format_complex_string_safe,
     check_transport_number_is_correct
 )
+from utils.claude import make_claude_request
 
 
 group_document_router = Router()
@@ -46,47 +47,6 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo"):
         image = pdf_to_image(destination, path, output_file)
 
         response = get_response(image_path=image)
-        response_json = json.loads(response.output_text)
-        print(document_name, response_json)
 
-        reference_number = response_json.get('7 Справочный номер')
-        reference_number, is_correct = format_complex_string_safe(reference_number)
-        if not is_correct:
-            await message.answer(f"Отправьте файл с названием {document_name} еще раз")
+        print(document_name, response.output_text)
 
-        date = reference_number.split('/')[1].strip()
-        transport_number = response_json.get('18 Транспортное средство при отправлении')
-        transport_number, is_correct_number = check_transport_number_is_correct(transport_number)
-        print(transport_number, is_correct_number)
-
-        # number = None
-        # if len(transport_number_list) == 2:
-        #     second = transport_number_list[1]
-        #     if '/' in second:
-        #         number = second.split('/')[0]
-        #     else:
-        #         number = second
-        # print(number)
-
-        # number = transport_number_list[1].split('/')[0]
-        # print(number)
-        # gross_weight = response_json.get('Вес брутто')
-        # net_weight = response_json.get('Вес нетто')
-        # places_quantity = response_json.get('Количество мест')
-        #
-        #
-        #
-        #
-        # df, stats = update_filtered_data_advanced(
-        #     file_path=all_chemistry_files[0].file_path,
-        #     filters=[
-        #         ("UNI", "contains", number)
-        #     ],
-        #     updates={
-        #         'ГТД ИМ73': reference_number,
-        #         'Дата начала хранения': date
-        #     },
-        #     save=True,
-        #     skip_existing=True
-        # )
-        # print(df, stats)

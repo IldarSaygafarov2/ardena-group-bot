@@ -1,32 +1,33 @@
 import base64
-
-from openai import OpenAI
-
-from config.loader import app_config
 import os
 
-client = OpenAI(api_key=app_config.gpt.api_key)
+import anthropic
+from dotenv import load_dotenv
+
+CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
+
+client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 
 
-# Function to encode the image
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
+def make_claude_request(file_path):
+    with open(file_path, 'rb') as file:
+        pdf_content = file.read()
 
+    base64_data = base64.b64encode(pdf_content).decode('utf-8')
+    file_name = os.path.basename(file_path)
 
-def get_response(image_path: str):
-    image = encode_image(image_path)
-    image_name = os.path.basename(image_path)
-    response = client.responses.create(
-        model=app_config.gpt.model,
-        input=[  # type: ignore
+    message = client.messages.create(
+        model='claude-sonnet-4-20250514',
+        max_tokens=1000,
+        messages=[  # type:ignore
             {
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": f"""
-Ты помощник по документам. Внимательно изучи PDF документ и извлеки следующие данные:
-
-НАЗВАНИЕ ФАЙЛА: {image_name}
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': f"""Ты помощник по документам. Внимательно изучи PDF документ и извлеки следующие данные:
+    
+НАЗВАНИЕ ФАЙЛА: {file_name}
 
 "GTD": номер ГТД в формате: 12345 / 01.01.2025 / 1234567
 
@@ -64,14 +65,20 @@ def get_response(image_path: str):
 4. Обрати особое внимание на графы 21, 35, 38
 
 Отдай все данные в виде словаря (JSON) без лишнего текста.
-Если какое-то поле не найдено — всё равно верни его со значением "none"
-                     """},
-                    {
-                        "type": "input_image",
-                        "image_url": f"data:image/jpeg;base64,{image}",
+Если какое-то поле не найдено — всё равно верни его со значением "none"."""
                     },
-                ],
+                    {
+                        'type': 'document',
+                        'source': {
+                            'type': 'base64',
+                            'media_type': 'application/pdf',
+                            'data': base64_data
+                        }
+                    }
+                ]
             }
-        ],
+        ]
     )
-    return response
+
+    claude_response = message.content[0].text.strip()
+    return claude_response
