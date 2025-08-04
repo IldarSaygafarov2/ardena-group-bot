@@ -83,3 +83,14 @@ def format_complex_string_safe(input_string: str) -> tuple[str, bool]:
 
     except Exception:
         return input_string, starts_with_number
+
+
+incorrect_number = 'АВТО 6016GGGA80287AA'
+correct_number = 'АВТО 5045НВА/5009708А'
+
+
+def check_transport_number_is_correct(transport_number: str):
+    _number = transport_number.split()[-1]
+    if '/' in _number:
+        return transport_number, True
+    return transport_number, False

@@ -7,7 +7,8 @@ def pdf_to_image(pdf_path: str, output_path: str, output_file: str):
     images = convert_from_path(
         pdf_path,
         first_page=1,
-        last_page=1
+        last_page=1,
+        dpi=300
     )[0]
 
     if not images:

@@ -7,7 +7,11 @@ from database.repo.requests import RequestsRepo
 from utils.chat_gpt import get_response
 from utils.pdf_to_image import pdf_to_image
 from tgbot.utils.excel import update_filtered_data_advanced
-from utils.helpers import format_complex_string_safe
+from utils.helpers import (
+    format_complex_string_safe,
+    check_transport_number_is_correct
+)
+
 
 group_document_router = Router()
 
@@ -45,17 +49,16 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo"):
         response_json = json.loads(response.output_text)
         print(document_name, response_json)
 
-        # reference_number = response_json.get('7 Справочный номер')
-        #
-        # reference_number, is_correct = format_complex_string_safe(reference_number)
-        #
-        # if not is_correct:
-        #     await message.answer(f"переотправьте файл с названием {document_name} еще раз")
-        #
-        # date = reference_number.split('/')[1].strip()
-        #
-        # transport_number = response_json.get('18 Транспортное средство при отправлении')
-        # transport_number_list = transport_number.split()
+        reference_number = response_json.get('7 Справочный номер')
+        reference_number, is_correct = format_complex_string_safe(reference_number)
+        if not is_correct:
+            await message.answer(f"Отправьте файл с названием {document_name} еще раз")
+
+        date = reference_number.split('/')[1].strip()
+        transport_number = response_json.get('18 Транспортное средство при отправлении')
+        transport_number, is_correct_number = check_transport_number_is_correct(transport_number)
+        print(transport_number, is_correct_number)
+
         # number = None
         # if len(transport_number_list) == 2:
         #     second = transport_number_list[1]
