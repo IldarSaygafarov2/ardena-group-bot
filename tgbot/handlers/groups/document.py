@@ -27,7 +27,6 @@ async def _send_message(bot, unis, chat_id, declaration_type):
 @group_document_router.message(F.chat.type.in_({"group", "supergroup"}))
 @group_document_router.message(F.document)
 async def get_message_from_group(message: types.Message, repo: "RequestsRepo", state: "FSMContext"):
-    global is_sent
 
     all_chemistry_files = await repo.chemistry_file.get_all_files()
     file_path = all_chemistry_files[0].file_path
