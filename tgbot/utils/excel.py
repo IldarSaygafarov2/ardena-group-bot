@@ -77,7 +77,7 @@ def update_filtered_data_advanced(
         updates: dict[str, typing.Any],
         skip_existing: bool = True,
         save: bool = True
-) -> tuple[pd.DataFrame, dict[str, int]]:
+) -> tuple[pd.DataFrame, dict[str, int], list]:
     """
     Обновляет данные с поддержкой различных операторов сравнения и пропуском существующих значений
 
@@ -89,7 +89,7 @@ def update_filtered_data_advanced(
         save (bool): Сохранить изменения
 
     Returns:
-        tuple[pd.DataFrame, dict[str, int]]: DataFrame и статистика обновлений
+        tuple[pd.DataFrame, dict[str, int], list]: DataFrame, статистика обновлений и список UNI обновленных записей
     """
     df = pd.read_excel(file_path)
     stats = {
@@ -97,8 +97,8 @@ def update_filtered_data_advanced(
         'updated_rows': 0,
         'skipped_rows': 0
     }
+    updated_unis = []  # Список для хранения UNI обновленных записей
 
-    # Словарь операторов сравнения
     operators = {
         '==': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
@@ -111,7 +111,6 @@ def update_filtered_data_advanced(
         'endswith': lambda x, y: x.str.endswith(y, na=False)
     }
 
-    # Создаем маску для фильтрации
     mask = pd.Series(True, index=df.index)
     for column, operator, value in filters:
         if operator not in operators:
@@ -119,36 +118,37 @@ def update_filtered_data_advanced(
         mask &= operators[operator](df[column], value)
 
     stats['total_matching_rows'] = mask.sum()
+    final_update_mask = pd.Series(False, index=df.index)
 
-    # Обновляем значения с проверкой существующих
     for column, new_value in updates.items():
         if column not in df.columns:
             raise ValueError(f"Столбец '{column}' не найден в файле")
 
         if skip_existing:
-            # Создаем маску для строк, где значение отличается от нового
             value_differs_mask = df[column] != new_value
-            # Объединяем с основной маской фильтрации
             update_mask = mask & value_differs_mask
 
-            # Подсчитываем статистику
             rows_to_update = update_mask.sum()
             stats['updated_rows'] += rows_to_update
             stats['skipped_rows'] += mask.sum() - rows_to_update
 
-            # Обновляем только те строки, где значение отличается
             df.loc[update_mask, column] = new_value
+            final_update_mask |= update_mask
         else:
-            # Обновляем все отфильтрованные строки
             df.loc[mask, column] = new_value
             stats['updated_rows'] += mask.sum()
+            final_update_mask |= mask
+
+    # Получаем UNI обновленных записей
+    if 'UNI' in df.columns:
+        updated_unis = df.loc[final_update_mask, 'UNI'].tolist()
 
     if save:
         df.to_excel(file_path, index=False)
 
-    return df, stats
+    return df, stats, updated_unis
 
-# updated_df, stats = update_filtered_data_advanced(
+# updated_df, stats, unis = update_filtered_data_advanced(
 #     file_path=TEST_PATH,
 #     filters=[
 #         ('UNI', 'contains', '50N782UA')
@@ -161,5 +161,6 @@ def update_filtered_data_advanced(
 #     skip_existing=True
 # )
 # print(stats)
+# print(unis)
 #
 # print(updated_df)
