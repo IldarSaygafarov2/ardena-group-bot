@@ -2,20 +2,33 @@ import json
 import os
 
 from aiogram import Router, F, types
+from aiogram.fsm.context import FSMContext
 
+from config.loader import app_config
 from database.repo.requests import RequestsRepo
 from tgbot.utils.excel import update_filtered_data_advanced
 from utils.chat_gpt import get_response
 from utils.pdf_to_image import pdf_to_image
 
-# from config.loader import app_config
-
 group_document_router = Router()
+
+is_sent = False
+
+
+async def _send_message(bot, unis, chat_id, declaration_type):
+    if not unis:
+        return
+    message = "ПРИХОД\n" if declaration_type == '73' else "РАСХОД\n"
+    for item in unis:
+        message += f'{item}\n'
+    await bot.send_message(chat_id=chat_id, text=message)
 
 
 @group_document_router.message(F.chat.type.in_({"group", "supergroup"}))
 @group_document_router.message(F.document)
-async def get_message_from_group(message: types.Message, repo: "RequestsRepo"):
+async def get_message_from_group(message: types.Message, repo: "RequestsRepo", state: "FSMContext"):
+    global is_sent
+
     all_chemistry_files = await repo.chemistry_file.get_all_files()
     file_path = all_chemistry_files[0].file_path
 
@@ -75,6 +88,13 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo"):
                 }
             )
             print('ИМ 73', document_name, stats, unis)
+            await _send_message(
+                bot=message.bot,
+                unis=unis,
+                chat_id=app_config.bot.admin_chat_id,
+                declaration_type="73",
+            )
+
         elif declaration_type == '40':
             df, stats, unis = update_filtered_data_advanced(
                 file_path=file_path,
@@ -87,3 +107,16 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo"):
                 }
             )
             print('ИМ 40', document_name, stats, unis)
+            await _send_message(
+                bot=message.bot,
+                unis=unis,
+                chat_id=app_config.bot.admin_chat_id,
+                declaration_type="40",
+            )
+
+    # file = types.FSInputFile(file_path)
+    # if not is_sent:
+    #     await message.bot.send_document(
+    #         chat_id=app_config.bot.admin_chat_id,
+    #         document=file
+    #     )
