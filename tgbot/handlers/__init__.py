@@ -8,7 +8,6 @@ routers_list = [
     admin_commands_router,
     admin_text_router,
 
-    # group router
     group_document_router
 ]
 

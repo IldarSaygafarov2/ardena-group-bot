@@ -1,8 +1,8 @@
-"""added chemistry file model
+"""added models
 
-Revision ID: c62188f333a3
+Revision ID: 56cb561d8cae
 Revises: 
-Create Date: 2025-07-29 13:14:00.236997
+Create Date: 2025-08-05 20:54:35.087041
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c62188f333a3'
+revision: str = '56cb561d8cae'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table('chemistry_files',
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('file_path', sa.String(), nullable=False),
-    sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('date', sa.String(), nullable=False),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
