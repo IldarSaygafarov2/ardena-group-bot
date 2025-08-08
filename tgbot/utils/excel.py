@@ -2,7 +2,6 @@ import typing
 
 import pandas as pd
 
-
 DOCUMENT_PATH = '../../documents/search-documents-QCRT (18).xlsx'
 TEST_PATH = '../../documents/29.07.2025/Chemistry file - 28.07.2025_0007654793.xlsx'
 
@@ -61,6 +60,7 @@ def get_filtered_excel_data(
     result = filtered_df.to_dict('records')
 
     return result
+
 
 # res = get_filtered_excel_data(
 #     file_path=TEST_PATH,
@@ -148,6 +148,7 @@ def update_filtered_data_advanced(
 
     return df, stats, updated_unis
 
+
 # updated_df, stats, unis = update_filtered_data_advanced(
 #     file_path=TEST_PATH,
 #     filters=[
@@ -164,3 +165,59 @@ def update_filtered_data_advanced(
 # print(unis)
 #
 # print(updated_df)
+
+def fill_excel_with_variables(
+    file_path: str,
+    output_path: str,
+    dispatch_date,
+    vehicle_number,
+    gross_weight,
+    net_weight,
+    cargo_places_count,
+    arrival_date,
+    gtd_im73,
+    gtd_registration_number,
+    storage_start_date,
+    gtd_amount,
+    gtd_currency_rate,
+    station
+) -> tuple:
+    """
+    Добавляет строку в Excel-файл, если такой записи ещё нет.
+    Уникальность определяется по: '№ вагона / авто' + 'Вес нетто, мт'.
+    """
+
+    # Загрузка файла
+    df = pd.read_excel(file_path)
+
+    # Проверка на дубликат
+    exists = (
+        (df['№ вагона / авто'] == vehicle_number) &
+        (df['Вес нетто, мт'] == net_weight)
+    ).any()
+
+    if exists:
+        return 0, []
+
+    # Новая строка — ключи на русском языке, как в файле
+    new_row = {
+        "Дата отправки": dispatch_date,
+        "№ вагона / авто": vehicle_number,
+        "Вес брутто, мт": gross_weight,
+        "Вес нетто, мт": net_weight,
+        "Количество грузовых мест": cargo_places_count,
+        "Дата прибытия:": arrival_date,
+        "ГТД ИМ73": gtd_im73,
+        "Рег. Номер ГТД": gtd_registration_number,
+        "Дата начала хранения": storage_start_date,
+        "Сумма ГТД": gtd_amount,
+        "Курс валют ГТД": gtd_currency_rate,
+        "Станция": station,
+        "Статус отчета": "отправить"
+    }
+
+    # Добавление и сохранение
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df.to_excel(output_path, index=False)
+
+    return 1, [vehicle_number]

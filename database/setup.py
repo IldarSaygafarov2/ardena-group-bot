@@ -8,8 +8,8 @@ def create_engine(db: DbConfig, echo: bool = False):
         echo=echo,
         future=True,
         pool_pre_ping=True,
-        max_overflow=10,
-        pool_size=5,
+        max_overflow=50,
+        pool_size=20,
         pool_timeout=30,
     )
 

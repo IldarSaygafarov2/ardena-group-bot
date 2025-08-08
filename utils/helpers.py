@@ -94,3 +94,11 @@ def check_transport_number_is_correct(transport_number: str):
     if '/' in _number:
         return transport_number, True
     return transport_number, False
+
+
+def split_gtd(gtd: str):
+    return [item.strip() for item in gtd.split('/')]
+
+
+
+
