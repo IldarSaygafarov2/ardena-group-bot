@@ -6,4 +6,4 @@ class MessageCounterState(StatesGroup):
 
 
 class AdminChemistryFilesState(StatesGroup):
-    files = State()
+    data = State()

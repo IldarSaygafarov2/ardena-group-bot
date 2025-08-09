@@ -107,7 +107,7 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
                 arrival_date=gtd_date,
                 gtd_im73=declaration_number,
                 gtd_registration_number=gtd,
-                storage_start_date=None,
+                storage_start_date=gtd_date,
                 gtd_amount=currency_total,
                 gtd_currency_rate=currency_rate,
                 station=station
