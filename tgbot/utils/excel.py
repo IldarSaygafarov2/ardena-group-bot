@@ -6,10 +6,6 @@ DOCUMENT_PATH = '../../documents/search-documents-QCRT (18).xlsx'
 TEST_PATH = '../../documents/29.07.2025/Chemistry file - 28.07.2025_0007654793.xlsx'
 
 
-def _convert_to_dict(item: list, required_fields: list):
-    return dict(zip(required_fields, item))
-
-
 def get_excel_data(file_path: str, required_fields: list):
     values = pd.read_excel(file_path).values.tolist()
     result = []
@@ -167,20 +163,22 @@ def update_filtered_data_advanced(
 # print(updated_df)
 
 def fill_excel_with_variables(
-    file_path: str,
-    output_path: str,
-    dispatch_date,
-    vehicle_number,
-    gross_weight,
-    net_weight,
-    cargo_places_count,
-    arrival_date,
-    gtd_im73,
-    gtd_registration_number,
-    storage_start_date,
-    gtd_amount,
-    gtd_currency_rate,
-    station
+        file_path: str,
+        output_path: str,
+        declaration_type,
+        dispatch_date,
+        vehicle_number,
+        gross_weight,
+        net_weight,
+        cargo_places_count,
+        arrival_date,
+        gtd_number,
+        gtd_registration_number,
+        storage_start_date,
+        gtd_amount,
+        gtd_currency_rate,
+        station
+
 ) -> tuple:
     """
     Добавляет строку в Excel-файл, если такой записи ещё нет.
@@ -192,8 +190,8 @@ def fill_excel_with_variables(
 
     # Проверка на дубликат
     exists = (
-        (df['№ вагона / авто'] == vehicle_number) &
-        (df['Вес нетто, мт'] == net_weight)
+            (df['№ вагона / авто'] == vehicle_number) &
+            (df['Вес нетто, мт'] == net_weight)
     ).any()
 
     if exists:
@@ -206,15 +204,27 @@ def fill_excel_with_variables(
         "Вес брутто, мт": gross_weight,
         "Вес нетто, мт": net_weight,
         "Количество грузовых мест": cargo_places_count,
-        "Дата прибытия:": arrival_date,
-        "ГТД ИМ73": gtd_im73,
-        "Рег. Номер ГТД": gtd_registration_number,
         "Дата начала хранения": storage_start_date,
         "Сумма ГТД": gtd_amount,
         "Курс валют ГТД": gtd_currency_rate,
         "Станция": station,
         "Статус отчета": "отправить"
     }
+
+    if declaration_type == '73':
+        new_row.update({
+            "Дата прибытия:": arrival_date,
+            "ГТД ИМ73": gtd_number,
+            "Рег. Номер ГТД": gtd_registration_number,
+        })
+
+    if declaration_type == '40':
+        new_row.update({
+            'ГТД ИМ40': gtd_number,
+            'Рег. Номер ГТД.1': gtd_registration_number,
+            'Дата окончания хранения': arrival_date
+        })
+
 
     # Добавление и сохранение
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)

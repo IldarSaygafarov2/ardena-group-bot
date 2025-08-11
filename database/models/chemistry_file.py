@@ -9,4 +9,5 @@ class ChemistryFile(Base, UuidPkMixin):
 
     name: Mapped[str] = mapped_column(unique=True)
     file_path: Mapped[str]
+    file_type: Mapped[str] = mapped_column(nullable=True)
     date: Mapped[str]
