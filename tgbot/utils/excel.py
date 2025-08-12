@@ -177,7 +177,8 @@ def fill_excel_with_variables(
         storage_start_date,
         gtd_amount,
         gtd_currency_rate,
-        station
+        station,
+        recipient
 
 ) -> tuple:
     """
@@ -222,7 +223,8 @@ def fill_excel_with_variables(
         new_row.update({
             'ГТД ИМ40': gtd_number,
             'Рег. Номер ГТД.1': gtd_registration_number,
-            'Дата окончания хранения': arrival_date
+            'Дата окончания хранения': arrival_date,
+            'Клиент на выдачу': recipient,
         })
 
 

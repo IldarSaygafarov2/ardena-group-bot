@@ -37,7 +37,8 @@ async def handle_admin_generate_report_command(message: types.Message, repo: "Re
             '№ вагона / авто',
             'ГТД ИМ40',
             'Рег. Номер ГТД.1',
-            'Дата окончания хранения'
+            'Дата окончания хранения',
+            'Клиент на выдачу'
         ]
     )
     await state.set_data(data={"data": filtered_data})
@@ -52,13 +53,10 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
 
     destination = await helpers.download_document(message, file_type='хим-состав', repo=repo)
     caption = message.caption
-    # print(filtered_data)
+    print(filtered_data)
 
     first_station_filters = ['нурхает', 'нурхаёт']
     second_station_filters = ['кизилтепа', 'кызылтепа']
-
-    # данные для НУРХАЁТ
-    # данные для кизилтепы
 
     station_data = []
 
@@ -98,6 +96,7 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
             save=True,
             skip_existing=True
         )
+        print(updated_df, stats)
         for uni in unis:
             if uni not in unique_unis:
                 unique_unis[uni] = _declaration_type
@@ -106,7 +105,7 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
     if not unique_unis:
         return await message.answer('не найдено совпадений по номеру авто')
 
-    declaration_type = list(set([_declaration_number for (vehicle_id, _declaration_number) in unique_unis]))
+    declaration_type = list(set([_declaration_number for (vehicle_id, _declaration_number) in unique_unis.items()]))
 
     chemistry_file = types.FSInputFile(path=destination)
 
@@ -117,7 +116,7 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
     )
     return await helpers.send_message_with_uni(
         bot=message.bot,
-        unis=[i[0] for i in unique_unis],
+        unis=[i for i in unique_unis],
         chat_id=app_config.bot.admin_chat_id,
         declaration_type=declaration_type[0]
     )

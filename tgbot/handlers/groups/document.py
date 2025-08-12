@@ -12,7 +12,6 @@ from utils.pdf_to_image import pdf_to_image
 
 group_document_router = Router()
 
-
 FIELDS = [
     "Дата отправки",
     "№ вагона / авто",
@@ -28,13 +27,9 @@ FIELDS = [
 ]
 
 
-
-
-
 @group_document_router.message(F.chat.type.in_({"group", "supergroup"}))
 @group_document_router.message(F.document)
 async def get_message_from_group(message: types.Message, repo: "RequestsRepo", state: "FSMContext"):
-
     all_chemistry_files = await repo.chemistry_file.get_file_by_type(file_type='учет')
     file_path = all_chemistry_files[0].file_path
 
@@ -81,6 +76,7 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
             currency_total = response_json.get('currency_total')
             currency_rate = response_json.get('currency_rate')
             count = response_json.get('count')
+            recipient = response_json.get('recipient')
 
             if gtd_number == '27014':
                 station = 'НУРХАЁТ'
@@ -89,8 +85,14 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
             else:
                 station = ''
 
+            try:
+                weight_b = f'{int(weight_b):,d}'
+                weight_n = f'{int(weight_n):,d}'
+            except Exception as e:
+                print(e)
+
             _, result = fill_excel_with_variables(
-                file_path, 
+                file_path,
                 output_path=file_path,
                 dispatch_date=None,
                 declaration_type=declaration_type,
@@ -104,13 +106,11 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
                 storage_start_date=gtd_date,
                 gtd_amount=currency_total,
                 gtd_currency_rate=currency_rate,
-                station=station
+                station=station,
+                recipient=recipient
             )
-            
+
             print(result)
-
+        #
         except Exception as e:
-            response_json = {}
             print(e)
-
-
