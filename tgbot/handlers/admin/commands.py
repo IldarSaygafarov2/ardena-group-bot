@@ -67,26 +67,38 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
 
     # print(station_data)
     unique_unis = {}
-    declaration_numbers = []
 
     for item in station_data:
+
         declaration_type_73 = item.get('ГТД ИМ73')
+        declaration_type_40 = item.get('ГТД ИМ40')
 
         _declaration_type = '73' if type(declaration_type_73) is str else '40'
-
+        # print(f'{_declaration_type=}, {declaration_type_73=}, {declaration_type_40=}')
+    #
         for_update = None
 
-        if item['Станция'].lower() in first_station_filters:
+        # if item['Станция'].lower() in first_station_filters:
+        #     for_update = {
+        #         'ГТД ИМ73': item.get('Рег. Номер ГТД'),
+        #         'Дата начала хранения': item.get('Дата начала хранения')
+        #     }
+        # elif item['Станция'].lower() in second_station_filters:
+        #     for_update = {
+        #         'Дата окончания хранения': item.get('Дата окончания хранения'),
+        #         'Номер накладной': item.get('ГТД ИМ40'),
+        #     }
+        if _declaration_type == '73':
             for_update = {
                 'ГТД ИМ73': item.get('Рег. Номер ГТД'),
                 'Дата начала хранения': item.get('Дата начала хранения')
             }
-        elif item['Станция'].lower() in second_station_filters:
+        elif _declaration_type == '40':
             for_update = {
                 'Дата окончания хранения': item.get('Дата окончания хранения'),
                 'Номер накладной': item.get('ГТД ИМ40'),
             }
-
+    #
         updated_df, stats, unis = update_filtered_data_advanced(
             file_path=destination,
             filters=[
@@ -101,11 +113,13 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
             if uni not in unique_unis:
                 unique_unis[uni] = _declaration_type
 
-
+    print(unique_unis)
+    #
+    #
     if not unique_unis:
         return await message.answer('не найдено совпадений по номеру авто')
 
-    declaration_type = list(set([_declaration_number for (vehicle_id, _declaration_number) in unique_unis.items()]))
+
 
     chemistry_file = types.FSInputFile(path=destination)
 
@@ -114,11 +128,12 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
         chat_id=app_config.bot.admin_chat_id,
         document=chemistry_file
     )
+    await state.clear()
     return await helpers.send_message_with_uni(
         bot=message.bot,
-        unis=[i for i in unique_unis],
+        unis=[i for i in unique_unis.items()],
         chat_id=app_config.bot.admin_chat_id,
-        declaration_type=declaration_type[0]
+        declaration_type=''
     )
 
 

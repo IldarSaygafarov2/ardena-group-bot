@@ -38,7 +38,21 @@ async def download_document(message: types.message, file_type: str, repo: Reques
 async def send_message_with_uni(bot, unis, chat_id, declaration_type):
     if not unis:
         return
-    message = "ПРИХОД\n" if declaration_type == '73' else "РАСХОД\n"
-    for item in unis:
-        message += f'{item}\n'
-    await bot.send_message(chat_id=chat_id, text=message)
+
+    income = ['ПРИХОД:\n']
+    outcome = ['РАСХОД:\n']
+
+    for item, _number in unis:
+        if _number == '73':
+            income.append(f'{item}\n')
+        elif _number == '40':
+            outcome.append(f'{item}\n')
+
+    income_message = ''.join(income)
+    outcome_message = ''.join(outcome)
+
+    if income_message:
+        await bot.send_message(chat_id=chat_id, text=income_message)
+    if outcome_message:
+        await bot.send_message(chat_id=chat_id, text=outcome_message)
+    # await bot.send_message(chat_id=chat_id, text=message)

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -50,6 +51,7 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
                 destination=destination
             )
         except TimeoutError:
+            await asyncio.sleep(3)
             await message.answer(f'Отправьте файл {document_name} еще раз')
 
         output_file = document_name.split('.')[0]
