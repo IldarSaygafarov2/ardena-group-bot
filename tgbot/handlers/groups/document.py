@@ -5,6 +5,7 @@ import os
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 
+from config.loader import app_config
 from database.repo.requests import RequestsRepo
 from tgbot.utils.excel import fill_excel_with_variables
 from utils.chat_gpt import get_response
@@ -113,6 +114,10 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
             )
 
             print(result)
-        #
+            await asyncio.sleep(3)
+            sent_message = await message.answer(text=f'Файл: {document_name} обработан')
+            await sent_message.delete()
         except Exception as e:
+            sent_message = await message.answer(text=f'Файл: {document_name} не обработан, отправьте его заново')
+            print(sent_message)
             print(e)
