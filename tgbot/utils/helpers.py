@@ -35,7 +35,7 @@ async def download_document(message: types.message, file_type: str, repo: Reques
     return destination
 
 
-async def send_message_with_uni(bot, unis, chat_id, declaration_type):
+async def send_message_with_uni(bot, unis, chat_id):
     if not unis:
         return
 

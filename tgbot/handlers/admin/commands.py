@@ -12,6 +12,7 @@ from tgbot.utils.excel import get_filtered_excel_data, update_filtered_data_adva
 admin_commands_router = Router()
 admin_commands_router.message.filter(AdminFilter())
 
+print(app_config)
 
 @admin_commands_router.message(CommandStart())
 async def handle_admin_start_command(message: types.Message):
@@ -124,17 +125,18 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
     chemistry_file = types.FSInputFile(path=destination)
 
     # отправляем измененный хим-состав
-    await message.bot.send_document(
-        chat_id=app_config.bot.admin_chat_id,
-        document=chemistry_file
-    )
     await state.clear()
-    return await helpers.send_message_with_uni(
-        bot=message.bot,
-        unis=[i for i in unique_unis.items()],
-        chat_id=app_config.bot.admin_chat_id,
-        declaration_type=''
-    )
 
+    for admin_chat_id in app_config.bot.admin_chat_id:
+        await message.bot.send_document(
+            chat_id=admin_chat_id,
+            document=chemistry_file
+        )
+        await helpers.send_message_with_uni(
+            bot=message.bot,
+            unis=[i for i in unique_unis.items()],
+            chat_id=admin_chat_id,
+        )
+    return None
 
 # TODO: сделать получение номера ГТД и отправку сообщения о приходе или расходе отталкиваясь от номера
