@@ -12,7 +12,6 @@ from tgbot.utils.excel import get_filtered_excel_data, update_filtered_data_adva
 admin_commands_router = Router()
 admin_commands_router.message.filter(AdminFilter())
 
-print(app_config)
 
 @admin_commands_router.message(CommandStart())
 async def handle_admin_start_command(message: types.Message):
@@ -49,12 +48,14 @@ async def handle_admin_generate_report_command(message: types.Message, repo: "Re
 
 @admin_commands_router.message(AdminChemistryFilesState.data)
 async def get_files_from_admin_to_report(message: types.Message, repo: RequestsRepo, state: "FSMContext"):
+    from_db = await repo.chemistry_file.get_file_by_type(file_type='учет')
+    file_path = from_db[0].file_path
+
     state_data = await state.get_data()
     filtered_data = state_data.get('data')
 
     destination = await helpers.download_document(message, file_type='хим-состав', repo=repo)
     caption = message.caption
-    print(filtered_data)
 
     first_station_filters = ['нурхает', 'нурхаёт']
     second_station_filters = ['кизилтепа', 'кызылтепа']
@@ -66,29 +67,15 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
     elif caption.lower() in second_station_filters:
         station_data = [item for item in filtered_data if item['Станция'].lower() in second_station_filters]
 
-    # print(station_data)
     unique_unis = {}
 
     for item in station_data:
 
         declaration_type_73 = item.get('ГТД ИМ73')
-        declaration_type_40 = item.get('ГТД ИМ40')
 
         _declaration_type = '73' if type(declaration_type_73) is str else '40'
-        # print(f'{_declaration_type=}, {declaration_type_73=}, {declaration_type_40=}')
-    #
-        for_update = None
 
-        # if item['Станция'].lower() in first_station_filters:
-        #     for_update = {
-        #         'ГТД ИМ73': item.get('Рег. Номер ГТД'),
-        #         'Дата начала хранения': item.get('Дата начала хранения')
-        #     }
-        # elif item['Станция'].lower() in second_station_filters:
-        #     for_update = {
-        #         'Дата окончания хранения': item.get('Дата окончания хранения'),
-        #         'Номер накладной': item.get('ГТД ИМ40'),
-        #     }
+        for_update = None
         if _declaration_type == '73':
             for_update = {
                 'ГТД ИМ73': item.get('Рег. Номер ГТД'),
@@ -99,28 +86,35 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
                 'Дата окончания хранения': item.get('Дата окончания хранения'),
                 'Номер накладной': item.get('ГТД ИМ40'),
             }
-    #
+        #
+        vehicle_number = item.get('№ вагона / авто')
         updated_df, stats, unis = update_filtered_data_advanced(
             file_path=destination,
             filters=[
-                ('UNI', 'contains', item.get('№ вагона / авто'))
+                ('UNI', 'contains', vehicle_number)
             ],
             updates=for_update,
             save=True,
             skip_existing=True
         )
-        print(updated_df, stats)
         for uni in unis:
             if uni not in unique_unis:
+                updated_df_2, stats_2, _ = update_filtered_data_advanced(
+                    file_path=file_path,
+                    filters=[
+                        ('№ вагона / авто', 'contains', vehicle_number),
+                    ],
+                    updates={
+                        'Статус отчета': "Отправлено"
+                    },
+                    save=True
+                )
+                print(updated_df_2, stats_2)
+
                 unique_unis[uni] = _declaration_type
 
-    print(unique_unis)
-    #
-    #
     if not unique_unis:
         return await message.answer('не найдено совпадений по номеру авто')
-
-
 
     chemistry_file = types.FSInputFile(path=destination)
 
@@ -137,6 +131,14 @@ async def get_files_from_admin_to_report(message: types.Message, repo: RequestsR
             unis=[i for i in unique_unis.items()],
             chat_id=admin_chat_id,
         )
+
     return None
 
-# TODO: сделать получение номера ГТД и отправку сообщения о приходе или расходе отталкиваясь от номера
+
+@admin_commands_router.message(Command('get_accounting_file'))
+async def get_accounting_file(message: types.Message, repo: RequestsRepo):
+    from_db = await repo.chemistry_file.get_file_by_type(file_type='учет')
+    file_path = from_db[0].file_path
+
+    accounting_file = types.FSInputFile(path=file_path)
+    await message.answer_document(document=accounting_file)

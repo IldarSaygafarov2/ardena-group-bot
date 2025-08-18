@@ -1,7 +1,7 @@
-import logging
 import asyncio
+import logging
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -36,6 +36,14 @@ async def main():
         default=DefaultBotProperties(
             parse_mode=ParseMode.HTML, link_preview_is_disabled=True
         ),
+    )
+
+    await bot.set_my_commands(
+        commands=[
+            types.BotCommand(command='start', description='Запуск бота'),
+            types.BotCommand(command='generate_report', description='Заполнение хим состава'),
+            types.BotCommand(command='get_accounting_file', description="Получение файла учетки")
+        ]
     )
     # await bot.delete_webhook()
 

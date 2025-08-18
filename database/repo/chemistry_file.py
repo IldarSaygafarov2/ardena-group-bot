@@ -50,7 +50,7 @@ class ChemistryFileRepo(BaseRepo):
     async def get_file_by_type(self, file_type: str):
         query = select(ChemistryFile).where(
             ChemistryFile.file_type == file_type
-        )
+        ).order_by(ChemistryFile.date.desc())
         result = await self.session.execute(query)
         return result.scalars().all()
 
