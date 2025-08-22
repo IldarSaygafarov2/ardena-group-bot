@@ -1,9 +1,12 @@
 import re
 import os
 import cv2
+import pytesseract
+from PIL import Image
 
 PLATE_CHARS = "A-ZА-Я0-9"
 PLATE_RE = f"[{PLATE_CHARS}]"
+
 
 def extract_vehicle_number(text: str, filename: str | None = None) -> str | None:
     """
@@ -62,6 +65,7 @@ def extract_vehicle_number(text: str, filename: str | None = None) -> str | None
             return m.group(0)
 
     return None
+
 
 def normalize_text(s: str) -> str:
     """Приводим текст в удобный вид"""
