@@ -11,7 +11,7 @@ from tgbot.utils.excel import fill_excel_with_variables
 from utils.chat_gpt import get_response
 from utils.helpers import split_gtd
 from utils.pdf_to_image import pdf_to_image
-from utils.extractor import extract_vehicle_number, ocr_image
+from utils.extractor import extract_vehicle_number, ocr_image, extract_gtd
 
 group_document_router = Router()
 
@@ -59,70 +59,70 @@ async def get_message_from_group(message: types.Message, repo: "RequestsRepo", s
         output_file = document_name.split('.')[0]
         image = pdf_to_image(destination, path, output_file)
         image_ocr = ocr_image(image)
-        vehicle_number = extract_vehicle_number(image_ocr, image)
-        print(image, vehicle_number)
 
 
-        # response = get_response(image_path=image)
-        #
-        # try:
-        #     response_json = json.loads(response.output_text)
-        #     print(response_json)
-        #
-        #     gtd = response_json.get('GTD')
-        #
-        #     gtd_number = split_gtd(gtd)[0]
-        #     gtd_date = split_gtd(gtd)[1]
-        #
-        #     print(f'{gtd_number=}')
-        #
-        #     declaration_type = response_json.get('declaration_type')
-        #     vehicle_id = response_json.get('vehicleId')
-        #     declaration_number = response_json.get('declaration_number')
-        #     weight_b = response_json.get('weightB')
-        #     weight_n = response_json.get('weightN')
-        #     currency_total = response_json.get('currency_total')
-        #     currency_rate = response_json.get('currency_rate')
-        #     count = response_json.get('count')
-        #     recipient = response_json.get('recipient')
-        #
-        #     if gtd_number == '27014':
-        #         station = 'НУРХАЁТ'
-        #     elif gtd_number == '12003':
-        #         station = 'КЫЗЫЛТЕПА'
-        #     else:
-        #         station = ''
-        #
-        #     try:
-        #         weight_b = f'{int(weight_b):,d}'
-        #         weight_n = f'{int(weight_n):,d}'
-        #     except Exception as e:
-        #         print(e)
-        #
-        #     _, result = fill_excel_with_variables(
-        #         file_path,
-        #         output_path=file_path,
-        #         dispatch_date=None,
-        #         declaration_type=declaration_type,
-        #         vehicle_number=vehicle_id,
-        #         gross_weight=weight_b,
-        #         net_weight=weight_n,
-        #         cargo_places_count=count,
-        #         arrival_date=gtd_date,
-        #         gtd_number=declaration_number,
-        #         gtd_registration_number=gtd,
-        #         storage_start_date=gtd_date,
-        #         gtd_amount=currency_total,
-        #         gtd_currency_rate=currency_rate,
-        #         station=station,
-        #         recipient=recipient
-        #     )
-        #
-        #     print(result)
-        #     await asyncio.sleep(3)
-        #     sent_message = await message.answer(text=f'Файл: {document_name} обработан')
-        #     await sent_message.delete()
-        # except Exception as e:
-        #     sent_message = await message.answer(text=f'Файл: {document_name} не обработан, отправьте его заново')
-        #     print(sent_message)
-        #     print(e)
+
+
+        response = get_response(image_path=image)
+
+        try:
+            response_json = json.loads(response.output_text)
+            print(response_json)
+
+            gtd = response_json.get('GTD')
+
+            gtd_number = split_gtd(gtd)[0]
+            gtd_date = split_gtd(gtd)[1]
+
+            print(f'{gtd_number=}')
+
+            declaration_type = response_json.get('declaration_type')
+            vehicle_id = extract_vehicle_number(image_ocr, image).split('/')[0]
+            declaration_number = response_json.get('declaration_number')
+            weight_b = response_json.get('weightB')
+            weight_n = response_json.get('weightN')
+            currency_total = response_json.get('currency_total')
+            currency_rate = response_json.get('currency_rate')
+            count = response_json.get('count')
+            recipient = response_json.get('recipient')
+
+            if gtd_number == '27014':
+                station = 'НУРХАЁТ'
+            elif gtd_number == '12003':
+                station = 'КЫЗЫЛТЕПА'
+            else:
+                station = ''
+
+            try:
+                weight_b = f'{int(weight_b):,d}'
+                weight_n = f'{int(weight_n):,d}'
+            except Exception as e:
+                print(e)
+
+            _, result = fill_excel_with_variables(
+                file_path,
+                output_path=file_path,
+                dispatch_date=None,
+                declaration_type=declaration_type,
+                vehicle_number=vehicle_id,
+                gross_weight=weight_b,
+                net_weight=weight_n,
+                cargo_places_count=count,
+                arrival_date=gtd_date,
+                gtd_number=declaration_number,
+                gtd_registration_number=gtd,
+                storage_start_date=gtd_date,
+                gtd_amount=currency_total,
+                gtd_currency_rate=currency_rate,
+                station=station,
+                recipient=recipient
+            )
+
+            print(result)
+            await asyncio.sleep(3)
+            sent_message = await message.answer(text=f'Файл: {document_name} обработан')
+            await sent_message.delete()
+        except Exception as e:
+            sent_message = await message.answer(text=f'Файл: {document_name} не обработан, отправьте его заново')
+            print(sent_message)
+            print(e)
